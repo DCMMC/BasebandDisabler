@@ -8,7 +8,6 @@ PYTHON ?= python3
 FLAGS := -isysroot $(SDK) -arch arm64 -miphoneos-version-min=16.0 -O2 -Wall -Wextra -Wno-unused-parameter
 OBJC := $(FLAGS) -fobjc-arc
 UI := Sources/App/BDBController.m Sources/App/BDBBridge.m
-DEB := dist/com.dcmmc.basebanddisabler_0.1.0_iphoneos-arm64.deb
 .PHONY: all package check clean assets
 all: package
 assets:
@@ -21,10 +20,7 @@ build/basebandctl: Sources/Helper/main.m build/Profile.o
 build/BasebandDisabler: Sources/App/main.m $(UI) Sources/App/BDBController.h Sources/App/BDBBridge.h
 	mkdir -p build
 	$(CC) $(OBJC) Sources/App/main.m $(UI) -framework UIKit -framework Foundation -o $@
-build/BasebandDisablerPrefs: Sources/Preferences/Preferences.m $(UI) Sources/App/BDBController.h Sources/App/BDBBridge.h
-	mkdir -p build
-	$(CC) $(OBJC) -bundle Sources/Preferences/Preferences.m $(UI) -F$(SDK)/System/Library/PrivateFrameworks -framework Preferences -framework UIKit -framework Foundation -o $@
-package: assets build/basebandctl build/BasebandDisabler build/BasebandDisablerPrefs
+package: assets build/basebandctl build/BasebandDisabler
 	$(PYTHON) scripts/package.py
 check: package
 	$(PYTHON) tests/test_package.py

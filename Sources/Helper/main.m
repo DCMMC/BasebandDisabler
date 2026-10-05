@@ -52,7 +52,7 @@ static NSDictionary *status(void) {
     BOOL off=verified && [physical[@"pmu_read"] boolValue] && ![physical[@"pmu_ext_on"] boolValue] && [physical[@"state"] unsignedIntValue]==1 && flags[@"radio_power_on_flag"] && ![flags[@"radio_power_on_flag"] boolValue] && [gpio[@"already_in_input_mode"] boolValue];
     BOOL missing=verified && [flags[@"radio_not_found"] unsignedIntValue]==1;
     BOOL on=verified && [physical[@"pmu_read"] boolValue] && [physical[@"pmu_ext_on"] boolValue] && [flags[@"radio_power_on_flag"] boolValue] && ![gpio[@"already_in_input_mode"] boolValue];
-    return @{@"model":sysString("hw.machine"),@"build":sysString("kern.osversion"),@"supported":@(verified),@"profile_supported":@(supported()),@"hardware_off":@(off),@"powered_on":@(on),@"power_known":@((BOOL)(on||off)),@"failure_detected":@(missing),@"auto_enabled":@([config()[@"auto_enabled"] boolValue]),@"backend_exit":@(rc),@"version":@"0.1.0"};
+    return @{@"model":sysString("hw.machine"),@"build":sysString("kern.osversion"),@"supported":@(verified),@"profile_supported":@(supported()),@"hardware_off":@(off),@"powered_on":@(on),@"power_known":@((BOOL)(on||off)),@"failure_detected":@(missing),@"auto_enabled":@([config()[@"auto_enabled"] boolValue]),@"backend_exit":@(rc),@"version":@"0.1.1"};
 }
 static NSString *failure(int code) {
     switch(code){case 2:case 3:return @"dopamine_required";case 4:return @"driver_unavailable";case 5:case 6:case 20:case 21:case 22:case 23:case 24:case 25:case 33:return @"unsupported_layout";case 26:case 27:case 32:return @"unsafe_state";case 34:return @"snapshot_missing";case 29:return @"restore_failed";case 36:case 70:return @"storage_failed";default:return @"operation_failed";}

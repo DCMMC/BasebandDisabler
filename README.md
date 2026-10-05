@@ -1,15 +1,17 @@
 # Baseband Disabler
 
-在 Dopamine 越狱环境下关闭故障基带，减少基带重试造成的待机耗电。提供桌面应用和设置页，可一键屏蔽、恢复供电、设置越狱后自动屏蔽，以及复制诊断信息。
+在 Dopamine 越狱环境下关闭故障基带，减少基带重试造成的待机耗电。提供桌面应用，可一键屏蔽、恢复供电、设置越狱后自动屏蔽，以及复制诊断信息。
 
-**0.1.0 仅支持已实测的 iPad13,6、iPadOS 16.3.1（20D67）。** 型号、系统构建或驱动布局不匹配时拒绝改变供电；未检测到对应基带故障时也拒绝屏蔽。此插件不能修复 eSIM 或基带硬件，屏蔽期间蜂窝网络停用。
+**0.1.1 仅支持已实测的 iPad13,6、iPadOS 16.3.1（20D67）。** 型号、系统构建或驱动布局不匹配时拒绝改变供电；未检测到对应基带故障时也拒绝屏蔽。此插件不能修复 eSIM 或基带硬件，屏蔽期间蜂窝网络停用。
 
 ![桌面应用界面，显示基带关闭并开启自动屏蔽](docs/app-preview.png)
 
 ## 安装与使用
 
-1. 下载 [0.1.0 安装包](https://github.com/DCMMC/BasebandDisabler/raw/refs/heads/main/dist/com.dcmmc.basebanddisabler_0.1.0_iphoneos-arm64.deb)，在已越狱设备上使用 Filza 安装。需要 rootless 环境、`uikittools` 和 `preferenceloader`。
-2. 打开桌面的 **Baseband Disabler**，或进入 **设置 → Baseband Disabler**。
+0.1.1 移除了系统设置中的入口和对应组件。升级后由包管理器清除 0.1.0 安装的设置文件；如果系统设置仍显示缓存中的旧项目，关闭并重新打开系统设置。
+
+1. 下载 [0.1.1 安装包](https://github.com/DCMMC/BasebandDisabler/raw/refs/heads/main/dist/com.dcmmc.basebanddisabler_0.1.1_iphoneos-arm64.deb)，在已越狱设备上使用 Filza 安装。需要 rootless 环境和 `uikittools`。
+2. 打开桌面的 **Baseband Disabler**。
 3. 点击“屏蔽故障基带”。完成后页面显示“基带已关闭”，并自动开启“越狱后自动屏蔽”。
 
 全新安装默认不改变基带供电，自动屏蔽关闭。页面随系统语言使用简体中文或英文，无需在应用里输入 root 密码。
@@ -19,7 +21,7 @@
 命令行安装可在 root 终端执行：
 
 ```sh
-dpkg -i com.dcmmc.basebanddisabler_0.1.0_iphoneos-arm64.deb
+dpkg -i com.dcmmc.basebanddisabler_0.1.1_iphoneos-arm64.deb
 ```
 
 ## 恢复与卸载
@@ -46,7 +48,7 @@ dpkg -i com.dcmmc.basebanddisabler_0.1.0_iphoneos-arm64.deb
 
 这些结果来自一台已存在基带硬件故障的设备，不能预测其他设备的耗电。短测的 PowerLog 时间戳有偏差，因此没有采用其按时间范围统计的唤醒次数；上述唤醒结果使用后续记录序号核对。
 
-插件版本已实测安装、恢复供电、重新屏蔽、状态读取与自动开关。桌面界面及设置 bundle 的加载预览已验证；系统“设置”进程内的实际导航与控制尚未完成验证。安装包的 7 项检查覆盖文件权限、签名哈希、启动任务、应用及设置入口和私有运行数据的排除。
+插件版本已实测安装、恢复供电、重新屏蔽、状态读取与自动开关。桌面界面已验证。安装包的 7 项检查覆盖文件权限、签名哈希、启动任务、桌面应用、设置组件的排除和私有运行数据的排除。
 
 ## 工作方式
 
@@ -54,7 +56,7 @@ dpkg -i com.dcmmc.basebanddisabler_0.1.0_iphoneos-arm64.deb
 
 此实现使用 Dopamine 的内核数据读写接口，不依赖内核函数调用能力。没有常驻轮询任务。新增设备配置需要单独分析和实机验证，不能只放宽型号检查或替换系统版本号。
 
-桌面应用和设置页共用界面，通过固定路径启动权限工具。只有 `basebandctl` 使用 setuid root；允许 root 和 mobile 用户执行固定命令，不接受任意程序、文件路径或内核地址。恢复记录和配置保存在 root 私有目录，操作使用互斥锁。可复制的诊断信息只包含型号、系统构建、供电及配置状态、后端退出码和插件版本。
+桌面应用通过固定路径启动权限工具。只有 `basebandctl` 使用 setuid root；允许 root 和 mobile 用户执行固定命令，不接受任意程序、文件路径或内核地址。恢复记录和配置保存在 root 私有目录，操作使用互斥锁。可复制的诊断信息只包含型号、系统构建、供电及配置状态、后端退出码和插件版本。
 
 ## 构建
 
@@ -69,7 +71,6 @@ make check SDK=/path/to/iPhoneOS16.5.sdk
 | 路径 | 内容 |
 | --- | --- |
 | `Sources/App` | UIKit 界面与权限工具通信 |
-| `Sources/Preferences` | PreferenceLoader 设置页 |
 | `Sources/Helper` | 命令分发和 20D67 设备配置 |
 | `Resources` | 图标、简体中文及英文文本、签名权限和 bundle 元数据 |
 | `packaging` | rootless 安装、卸载和单次启动任务 |

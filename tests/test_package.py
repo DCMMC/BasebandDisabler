@@ -11,7 +11,7 @@ import re
 import unittest
 
 ROOT=Path(__file__).resolve().parents[1]
-DEB=ROOT/'dist/com.dcmmc.basebanddisabler_0.1.0_iphoneos-arm64.deb'
+DEB=ROOT/'dist/com.dcmmc.basebanddisabler_0.1.1_iphoneos-arm64.deb'
 class PackageContract(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -35,20 +35,19 @@ class PackageContract(unittest.TestCase):
         p=plistlib.loads(self.read('var/jb/Library/LaunchDaemons/com.dcmmc.basebanddisabler.plist'))
         self.assertTrue(p['RunAtLoad']);self.assertFalse(p['KeepAlive'])
         self.assertEqual(p['UserName'],'root');self.assertNotIn('StartInterval',p)
-    def test_app_and_settings_entry_match(self):
+    def test_app_without_settings_component(self):
         app=plistlib.loads(self.read('var/jb/Applications/BasebandDisabler.app/Info.plist'))
-        prefs=plistlib.loads(self.read('var/jb/Library/PreferenceBundles/BasebandDisablerPrefs.bundle/Info.plist'))
-        entry=plistlib.loads(self.read('var/jb/Library/PreferenceLoader/Preferences/BasebandDisabler.plist'))['entry']
         self.assertEqual(app['CFBundleIdentifier'],'com.dcmmc.basebanddisabler')
-        self.assertEqual(entry['detail'],prefs['NSPrincipalClass'])
-        self.assertEqual(entry['bundle'],prefs['CFBundleExecutable'])
-        for root in ['var/jb/Applications/BasebandDisabler.app','var/jb/Library/PreferenceBundles/BasebandDisablerPrefs.bundle']:
-            for locale in ('en','zh-Hans'):self.assertIn(root+'/'+locale+'.lproj/Localizable.strings',self.files)
+        self.assertEqual(app['CFBundleShortVersionString'],'0.1.1')
+        self.assertFalse(any(name.startswith(('var/jb/Library/PreferenceLoader/','var/jb/Library/PreferenceBundles/')) for name in self.files))
+        dependencies=subprocess.check_output(['dpkg-deb','--field',str(DEB),'Depends'],text=True)
+        self.assertNotIn('preferenceloader',dependencies.lower())
+        for locale in ('en','zh-Hans'):self.assertIn('var/jb/Applications/BasebandDisabler.app/'+locale+'.lproj/Localizable.strings',self.files)
     def test_trustcache_matches_built_payload(self):
         hashes=self.read('var/jb/usr/libexec/basebanddisabler/trustcache.list').decode().splitlines()
-        self.assertEqual(len(hashes),3);self.assertEqual(len(set(hashes)),3)
+        self.assertEqual(len(hashes),2);self.assertEqual(len(set(hashes)),2)
         self.assertTrue(all(len(h)==40 and all(c in '0123456789abcdef' for c in h) for h in hashes))
-        paths=['var/jb/usr/libexec/basebanddisabler/basebandctl','var/jb/Applications/BasebandDisabler.app/BasebandDisabler','var/jb/Library/PreferenceBundles/BasebandDisablerPrefs.bundle/BasebandDisablerPrefs']
+        paths=['var/jb/usr/libexec/basebanddisabler/basebandctl','var/jb/Applications/BasebandDisabler.app/BasebandDisabler']
         with tempfile.TemporaryDirectory(dir=ROOT/'build') as directory:
             for expected,path in zip(hashes,paths):
                 binary=Path(directory)/Path(path).name;binary.write_bytes(self.read(path))

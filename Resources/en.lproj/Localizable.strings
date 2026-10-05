@@ -1,5 +1,5 @@
 "about" = "DEVICE";
-"about_footer" = "Baseband Disabler 0.1.0 · Software workaround for a faulty modem. Hardware is not repaired.";
+"about_footer" = "Baseband Disabler 0.1.1 · Software workaround for a faulty modem. Hardware is not repaired.";
 "auto" = "Disable after jailbreaking";
 "auto_footer" = "Runs once after jailbreaking. Turning this switch off leaves the current modem power unchanged. A normal boot without jailbreak does not apply the setting.";
 "automatic" = "STARTUP";
