@@ -1,0 +1,20 @@
+#!/var/jb/bin/sh
+set -eu
+if [ "${1:-}" != configure ]; then exit 0; fi
+helper=/var/jb/usr/libexec/basebanddisabler/basebandctl
+chown root:wheel "$helper"
+chmod 4755 "$helper"
+while IFS= read -r hash; do
+    /var/jb/basebin/jbctl trustcache add "$hash"
+done < /var/jb/usr/libexec/basebanddisabler/trustcache.list
+"$helper" status >/dev/null
+legacy=/var/jb/Library/LaunchDaemons/local.ipad.baseband-off.plist
+if [ -f "$legacy" ]; then
+    "$helper" migrate-legacy >/dev/null
+    /var/jb/usr/bin/launchctl bootout system "$legacy" 2>/dev/null || true
+    mv "$legacy" "$legacy.basebanddisabler-backup"
+fi
+job=/var/jb/Library/LaunchDaemons/com.dcmmc.basebanddisabler.plist
+/var/jb/usr/bin/launchctl bootout system "$job" 2>/dev/null || true
+/var/jb/usr/bin/launchctl bootstrap system "$job"
+/var/jb/usr/bin/uicache -p /var/jb/Applications/BasebandDisabler.app

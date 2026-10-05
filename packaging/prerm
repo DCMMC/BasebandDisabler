@@ -1,0 +1,7 @@
+#!/var/jb/bin/sh
+set -eu
+case "${1:-}" in remove|deconfigure)
+    /var/jb/usr/bin/launchctl bootout system /var/jb/Library/LaunchDaemons/com.dcmmc.basebanddisabler.plist 2>/dev/null || true
+    /var/jb/usr/libexec/basebanddisabler/basebandctl restore
+    /var/jb/usr/bin/uicache -u /var/jb/Applications/BasebandDisabler.app
+    ;; esac
