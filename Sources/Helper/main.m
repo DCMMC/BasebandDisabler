@@ -4,6 +4,7 @@
 #include <sys/sysctl.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include "PowerState.h"
 
 extern int BDNativeMain(int argc, char **argv);
 static NSString *const State = @"/var/jb/var/basebanddisabler";
@@ -49,10 +50,12 @@ static NSDictionary *status(void) {
     int rc=0; NSArray *rows=supported()?nativeRun(@"",&rc):@[];
     NSDictionary *physical=find(rows,@"pmu_read"),*flags=find(rows,@"radio_not_found"),*gpio=find(rows,@"already_in_input_mode");
     BOOL verified=supported() && rc==0 && [find(rows,@"layout_verified")[@"layout_verified"] boolValue] && [gpio[@"gpio_provider_verified"] boolValue];
-    BOOL off=verified && [physical[@"pmu_read"] boolValue] && ![physical[@"pmu_ext_on"] boolValue] && [physical[@"state"] unsignedIntValue]==1 && flags[@"radio_power_on_flag"] && ![flags[@"radio_power_on_flag"] boolValue] && [gpio[@"already_in_input_mode"] boolValue];
+    BOOL stateRead=[physical[@"state_read"] boolValue];
+    uint64_t driverState=stateRead?[physical[@"state"] unsignedLongLongValue]:UINT64_MAX;
+    BOOL off=verified && stateRead && flags[@"radio_power_on_flag"] && BDBVerifiedPowerOff([physical[@"pmu_read"] boolValue],[physical[@"pmu_ext_on"] boolValue],[flags[@"radio_power_on_flag"] unsignedIntValue],[gpio[@"already_in_input_mode"] boolValue],driverState);
     BOOL missing=verified && [flags[@"radio_not_found"] unsignedIntValue]==1;
     BOOL on=verified && [physical[@"pmu_read"] boolValue] && [physical[@"pmu_ext_on"] boolValue] && [flags[@"radio_power_on_flag"] boolValue] && ![gpio[@"already_in_input_mode"] boolValue];
-    return @{@"model":sysString("hw.machine"),@"build":sysString("kern.osversion"),@"supported":@(verified),@"profile_supported":@(supported()),@"hardware_off":@(off),@"powered_on":@(on),@"power_known":@((BOOL)(on||off)),@"failure_detected":@(missing),@"auto_enabled":@([config()[@"auto_enabled"] boolValue]),@"backend_exit":@(rc),@"version":@"0.1.1"};
+    return @{@"model":sysString("hw.machine"),@"build":sysString("kern.osversion"),@"supported":@(verified),@"profile_supported":@(supported()),@"hardware_off":@(off),@"powered_on":@(on),@"power_known":@((BOOL)(on||off)),@"driver_state":stateRead?@(driverState):NSNull.null,@"driver_state_off":@((BOOL)(stateRead && driverState==1)),@"failure_detected":@(missing),@"auto_enabled":@([config()[@"auto_enabled"] boolValue]),@"backend_exit":@(rc),@"version":@"0.1.2"};
 }
 static NSString *failure(int code) {
     switch(code){case 2:case 3:return @"dopamine_required";case 4:return @"driver_unavailable";case 5:case 6:case 20:case 21:case 22:case 23:case 24:case 25:case 33:return @"unsupported_layout";case 26:case 27:case 32:return @"unsafe_state";case 34:return @"snapshot_missing";case 29:return @"restore_failed";case 36:case 70:return @"storage_failed";default:return @"operation_failed";}

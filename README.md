@@ -2,15 +2,17 @@
 
 在 Dopamine 越狱环境下关闭故障基带，减少基带重试造成的待机耗电。提供桌面应用，可一键屏蔽、恢复供电、设置越狱后自动屏蔽，以及复制诊断信息。
 
-**0.1.1 仅支持已实测的 iPad13,6、iPadOS 16.3.1（20D67）。** 型号、系统构建或驱动布局不匹配时拒绝改变供电；未检测到对应基带故障时也拒绝屏蔽。此插件不能修复 eSIM 或基带硬件，屏蔽期间蜂窝网络停用。
+**0.1.2 仅支持已实测的 iPad13,6、iPadOS 16.3.1（20D67）。** 型号、系统构建或驱动布局不匹配时拒绝改变供电；未检测到对应基带故障时也拒绝屏蔽。此插件不能修复 eSIM 或基带硬件，屏蔽期间蜂窝网络停用。
 
 ![桌面应用界面，显示基带关闭并开启自动屏蔽](docs/app-preview.png)
 
 ## 安装与使用
 
+0.1.2 修复了基带已经断电、驱动后来报告“故障”（11）时，重复屏蔽被拒绝、界面错误显示尚未关闭的问题。仅在 PMU 供电关闭、驱动供电标记为零、防反向供电 GPIO 为输入且逻辑状态为已验证的 1 或 11 时确认关闭。重复屏蔽仍校验本次启动的恢复记录及原有操作前置条件；不会为了清除报错重新给基带上电。
+
 0.1.1 移除了系统设置中的入口和对应组件。升级后由包管理器清除 0.1.0 安装的设置文件；如果系统设置仍显示缓存中的旧项目，关闭并重新打开系统设置。
 
-1. 下载 [0.1.1 安装包](https://github.com/DCMMC/BasebandDisabler/raw/refs/heads/main/dist/com.dcmmc.basebanddisabler_0.1.1_iphoneos-arm64.deb)，在已越狱设备上使用 Filza 安装。需要 rootless 环境和 `uikittools`。
+1. 下载 [0.1.2 安装包](https://github.com/DCMMC/BasebandDisabler/raw/refs/heads/main/dist/com.dcmmc.basebanddisabler_0.1.2_iphoneos-arm64.deb)，在已越狱设备上使用 Filza 安装。需要 rootless 环境和 `uikittools`。
 2. 打开桌面的 **Baseband Disabler**。
 3. 点击“屏蔽故障基带”。完成后页面显示“基带已关闭”，并自动开启“越狱后自动屏蔽”。
 
@@ -21,7 +23,7 @@
 命令行安装可在 root 终端执行：
 
 ```sh
-dpkg -i com.dcmmc.basebanddisabler_0.1.1_iphoneos-arm64.deb
+dpkg -i com.dcmmc.basebanddisabler_0.1.2_iphoneos-arm64.deb
 ```
 
 ## 恢复与卸载
@@ -48,7 +50,7 @@ dpkg -i com.dcmmc.basebanddisabler_0.1.1_iphoneos-arm64.deb
 
 这些结果来自一台已存在基带硬件故障的设备，不能预测其他设备的耗电。短测的 PowerLog 时间戳有偏差，因此没有采用其按时间范围统计的唤醒次数；上述唤醒结果使用后续记录序号核对。
 
-插件版本已实测安装、恢复供电、重新屏蔽、状态读取与自动开关。桌面界面已验证。安装包的 7 项检查覆盖文件权限、签名哈希、启动任务、桌面应用、设置组件的排除和私有运行数据的排除。
+插件版本已实测安装、恢复供电、重新屏蔽、状态读取与自动开关。诊断信息分别记录物理供电状态与 `driver_state`，避免把逻辑故障状态当作供电证明。0.1.2 已在真实的“逻辑故障 11、实际断电”状态下验证重复屏蔽成功，并验证恢复供电后可以再次屏蔽，最终基带保持关闭。桌面界面已验证。安装包的 7 项检查覆盖文件权限、签名哈希、启动任务、桌面应用、设置组件的排除和私有运行数据的排除。
 
 ## 工作方式
 
@@ -66,7 +68,7 @@ dpkg -i com.dcmmc.basebanddisabler_0.1.1_iphoneos-arm64.deb
 make check SDK=/path/to/iPhoneOS16.5.sdk
 ```
 
-`make package` 只构建安装包；`make check` 同时检查实际 `.deb`。产物放在 `dist/`。SDK、越狱运行库、设备恢复记录、密码和原始诊断日志不包含在仓库或安装包中。
+`make package` 只构建安装包；`make check` 同时编译供电判断的回归断言并检查实际 `.deb`。产物放在 `dist/`。SDK、越狱运行库、设备恢复记录、密码和原始诊断日志不包含在仓库或安装包中。
 
 | 路径 | 内容 |
 | --- | --- |
@@ -75,7 +77,7 @@ make check SDK=/path/to/iPhoneOS16.5.sdk
 | `Resources` | 图标、简体中文及英文文本、签名权限和 bundle 元数据 |
 | `packaging` | rootless 安装、卸载和单次启动任务 |
 | `scripts` | 资源生成与签名打包 |
-| `tests` | 实际安装包检查 |
+| `tests` | 供电判断回归断言与实际安装包检查 |
 
 ## 命令行控制
 

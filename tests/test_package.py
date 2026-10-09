@@ -11,7 +11,7 @@ import re
 import unittest
 
 ROOT=Path(__file__).resolve().parents[1]
-DEB=ROOT/'dist/com.dcmmc.basebanddisabler_0.1.1_iphoneos-arm64.deb'
+DEB=ROOT/'dist/com.dcmmc.basebanddisabler_0.1.2_iphoneos-arm64.deb'
 class PackageContract(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -38,7 +38,7 @@ class PackageContract(unittest.TestCase):
     def test_app_without_settings_component(self):
         app=plistlib.loads(self.read('var/jb/Applications/BasebandDisabler.app/Info.plist'))
         self.assertEqual(app['CFBundleIdentifier'],'com.dcmmc.basebanddisabler')
-        self.assertEqual(app['CFBundleShortVersionString'],'0.1.1')
+        self.assertEqual(app['CFBundleShortVersionString'],'0.1.2')
         self.assertFalse(any(name.startswith(('var/jb/Library/PreferenceLoader/','var/jb/Library/PreferenceBundles/')) for name in self.files))
         dependencies=subprocess.check_output(['dpkg-deb','--field',str(DEB),'Depends'],text=True)
         self.assertNotIn('preferenceloader',dependencies.lower())

@@ -1,5 +1,5 @@
 "about" = "设备信息";
-"about_footer" = "Baseband Disabler 0.1.1 · 用于降低故障基带耗电，硬件故障仍需维修。";
+"about_footer" = "Baseband Disabler 0.1.2 · 用于降低故障基带耗电，硬件故障仍需维修。";
 "auto" = "越狱后自动屏蔽";
 "auto_footer" = "重新越狱后执行一次。关闭此开关不会改变当前基带供电。未越狱的正常启动不会应用屏蔽。";
 "automatic" = "自动启动";

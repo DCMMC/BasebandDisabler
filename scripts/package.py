@@ -26,6 +26,6 @@ copy('packaging/launch.plist','var/jb/Library/LaunchDaemons/com.dcmmc.basebanddi
 for name in ('control','postinst','prerm'):copy('packaging/'+name,'DEBIAN/'+name,0o644 if name=='control' else 0o755)
 for directory,dirs,files in os.walk(stage):os.chmod(directory,0o755)
 (ROOT/'dist').mkdir(exist_ok=True)
-deb=ROOT/'dist/com.dcmmc.basebanddisabler_0.1.1_iphoneos-arm64.deb'
+deb=ROOT/'dist/com.dcmmc.basebanddisabler_0.1.2_iphoneos-arm64.deb'
 subprocess.run(['dpkg-deb','--root-owner-group','-Zxz','--build',str(stage),str(deb)],check=True)
 print(deb)

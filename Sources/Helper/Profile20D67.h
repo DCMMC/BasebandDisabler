@@ -5,6 +5,7 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/sysctl.h>
+#include "PowerState.h"
 
 #define HP_STATE "/var/jb/var/basebanddisabler/original-state.json"
 
@@ -141,9 +142,9 @@ static int native_power_hold(io_service_t service,io_connect_t port,uint64_t dri
     if(seconds==181 && initial && r8(driver+0x2b9)==1 && default_matches && initial_state==11) {
         puts("{\"already_restored_verified\":true}");return 0;
     }
-    if(!initial && r8(driver+0x2b9)==0 && initially_input && initial_state==1) {
+    if(BDBVerifiedPowerOff(true,initial,r8(driver+0x2b9),initially_input,initial_state)) {
         if(!hp_snapshot(false)){puts("{\"refused\":\"no matching restoration snapshot\"}");return 34;}
-        if(seconds==0){puts("{\"already_off_verified\":true}");return 0;}
+        if(seconds==0){printf("{\"already_off_verified\":true,\"driver_state\":%llu}\n",(unsigned long long)initial_state);return 0;}
         if(seconds!=181)return 35;
         atexit(hp_exit_restore);signal(SIGTERM,hp_signal);signal(SIGINT,hp_signal);signal(SIGHUP,hp_signal);
         hp_touched=true;return hp_recover()?0:29;
@@ -157,8 +158,9 @@ static int native_power_hold(io_service_t service,io_connect_t port,uint64_t dri
     bool pin_input=(current&0x27e)==input;
     printf("{\"off_observation\":{\"pmu_read\":%s,\"pmu_ext_on\":%s,\"gpio_now_input\":%s,\"gpio_cfg\":\"0x%x\"}}\n",read?"true":"false",value?"true":"false",pin_input?"true":"false",current);
     uint64_t off_state=0;uint32_t off_count=1;
-    bool state_off=!IOConnectCallScalarMethod(hp_port,26,NULL,0,&off_state,&off_count) && off_count==1 && off_state==1;
-    if(off || !read || value || r8(driver+0x2b9)!=0 || r8(hp_guard)!=1 || !pin_input || !state_off || hp_stop){hp_recover();return 28;}
+    bool state_read=!IOConnectCallScalarMethod(hp_port,26,NULL,0,&off_state,&off_count) && off_count==1;
+    bool physical_off=BDBVerifiedPowerOff(read && state_read,value,r8(driver+0x2b9),pin_input,off_state);
+    if(off || !physical_off || r8(hp_guard)!=1 || hp_stop){hp_recover();return 28;}
     if(seconds==0){hp_touched=false;puts("{\"off_committed_verified\":true}");return 0;}
     puts("HOLD_STARTED");
     struct timespec start,now;clock_gettime(CLOCK_MONOTONIC,&start);

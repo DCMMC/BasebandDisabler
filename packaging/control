@@ -1,6 +1,6 @@
 Package: com.dcmmc.basebanddisabler
 Name: Baseband Disabler
-Version: 0.1.1
+Version: 0.1.2
 Architecture: iphoneos-arm64
 Description: One-tap control for a verified faulty iPad baseband, with restoration and jailbreak startup settings.
 Maintainer: DCMMC
